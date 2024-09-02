@@ -1,6 +1,6 @@
 title: Mlflow on OKE
 schemaVersion: 1.1.0
-version: "20211108"
+version: "20190304"
 locale: "en"
 groupings:
   - title: "SSH Key"
@@ -70,9 +70,9 @@ groupings:
 
 variables:
   ssh_provided_public_key:
-    type: string
+    type: oci:core:ssh:publickey
     title: "SSH Public Key"
-    description: "Copy/Paste the contents of your SSH Public Key"
+    description: "SSH Public Key that will be used to access The Bastion Host"
     required: true
     default: ""
 
