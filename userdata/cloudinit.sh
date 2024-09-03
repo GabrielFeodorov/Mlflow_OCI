@@ -392,7 +392,7 @@ spec:
       - args:
         - --provider=oidc
         - --provider-display-name="Oracle Identity Domains"
-        - --oidc-issuer-url="$issuer/"
+        - --oidc-issuer-url=$issuer/
         # added skip issuer since issuer might differ from provider url
         - --insecure-oidc-skip-issuer-verification=true
         - --redirect-url=https://$DOMAIN/oauth2/callback
@@ -401,14 +401,14 @@ spec:
         - --email-domain=*
         - --set-xauthrequest=true
         - --session-cookie-minimal=true
-        - --whitelist-domain="$issuer_fqdn"
+        - --whitelist-domain=$issuer_fqdn
         env:
         - name: OAUTH2_PROXY_CLIENT_ID
-          value: "$client_id"
+          value: $client_id
         - name: OAUTH2_PROXY_CLIENT_SECRET
-          value: "$client_secret"  
+          value: $client_secret 
         - name: OAUTH2_PROXY_COOKIE_SECRET
-          value: "$OAUTH2_PROXY_COOKIE_SECRET"
+          value: $OAUTH2_PROXY_COOKIE_SECRET
         image: quay.io/oauth2-proxy/oauth2-proxy:latest
         imagePullPolicy: Always
         name: oauth2-proxy
