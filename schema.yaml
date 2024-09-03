@@ -261,10 +261,10 @@ variables:
     required: true
 
   useExistingBucket:
-  type: boolean
-  title: "Use existing Bucket for storing Artifacts"
-  default: false
-  required: true
+    type: boolean
+    title: "Use existing Bucket for storing Artifacts"
+    default: false
+    required: true
 
 
   bucket_name:
