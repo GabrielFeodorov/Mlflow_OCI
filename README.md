@@ -131,14 +131,76 @@ You can check status of the OKE cluster using the following kubectl commands:
 	kubectl get all -A
 
 ### Mlflow Access
-
+The console should be available at https://mlflow.<reserved_public_ip>.nip.io . In case you're not seeing it, please wait for it to be available or:
 
 	ssh -i ~/.ssh/PRIVATE_KEY opc@EDGE_NODE_IP
 	cat /var/log/OKE-mlflow-initialize.log|egrep -i "Point your browser to"
 
-	Note: The certificate created for this deployment is a self signed certificate and hence the browser will issue warning. It needs to be accepted. 
+Note: The certificate created for this deployment is a self signed certificate and hence the browser will issue warning. It needs to be accepted. 
 
 Login using Oracle IDCS. If you're not using Oracle IDCS for auth, you will not have an authentication form.
+
+
+
+### Testing Mlflow
+Use a notebook to test Mlflow tracking service.
+Since this deployment is using a self signed certificate, you either allow your notebook to use it, or set the **MLFLOW_TRACKING_INSECURE_TLS** to true.
+To allow your notebook to use the self signed certificate:
+1. The tls secret is called **mlflow-tls-cert** and is created on **mlflow** namespace.
+2. Create a volume and mount path in your notebook deployment:
+	-   ``` 
+			volumes:
+	      	- name: ca-cert
+          		secret:
+          		  secretName: mlflow-tls-cert
+          		  items:
+          		    - key: tls.crt
+          		      path: b64
+          		  defaultMode: 511```
+	- 	```
+			volumeMounts:
+			- name: ca-cert\\
+              readOnly: true\\
+              mountPath: /cert"
+		```
+3. Instead of using **MLFLOW_TRACKING_INSECURE_TLS** you can use:
+	``` os.environ["MLFLOW_TRACKING_SERVER_CERT_PATH"] = "/cert"```
+
+
+
+Testing MLFLOW
+```
+import mlflow
+import os
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import load_diabetes
+from sklearn.ensemble import RandomForestRegressor
+
+# Ignoring the TLS
+os.environ["MLFLOW_TRACKING_INSECURE_TLS"] = "true"
+# Set the Mlflow tracking Url.
+mlflow.set_tracking_uri("https://mlflow.<reserved_public_ip>.nip.io/")
+# Setting experiment id
+mlflow.set_experiment(experiment_id="0")
+
+mlflow.autolog()
+db = load_diabetes()
+
+X_train, X_test, y_train, y_test = train_test_split(db.data, db.target)
+
+# Create and train models.
+rf = RandomForestRegressor(n_estimators=100, max_depth=6, max_features=3)
+rf.fit(X_train, y_train)
+
+# Use the model to make predictions on the test dataset.
+predictions = rf.predict(X_test)
+print(predictions)
+```
+
+Results:
+- You can access your Mlflow console at https://mlflow.<reserved_public_ip>.nip.io
+- You should be able to see the run
+- The Artifacts will be stored in the OCI Bucket you provided or the one that was created by terraform(check Buckets in your compartment, name should be **mlflow_bucket_*).
 
 ### Destroying the Stack
 Note that with the inclusion of SSL Load Balancer, you will need to remove the `` ingress-nginx-controller `` service before you destroy the stack, or you will get an error. 
