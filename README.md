@@ -198,7 +198,7 @@ print(predictions)
 ```
 
 Results:
-- You can access your Mlflow console at https://mlflow.<reserved_public_ip>.nip.io
+- You can access your Mlflow console at ```https://mlflow.<reserved_public_ip>.nip.io```
 - You should be able to see the run
 - The Artifacts will be stored in the OCI Bucket you provided or the one that was created by terraform(check Buckets in your compartment, name should be **mlflow_bucket_*).
 
