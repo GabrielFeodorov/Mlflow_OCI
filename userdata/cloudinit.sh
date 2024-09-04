@@ -269,23 +269,26 @@ kubectl --kubeconfig /root/.kube/config apply -f /opt/MLFLOW/mlflow_deploy.yaml
 
 sleep 30
 
-cat <<EOF | tee /opt/MLFLOW/mlflow_service.yaml
+
+
+
+cat <<EOF | tee /opt/MLFLOW/mlflow_api_service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: mlflow-tracking-service
+  name: mlflow-api-service
   namespace: mlflow
 spec:
   selector:
     app: mlflow-tracking-server-pods
   ports:
-    - port: 5000
+    - port: 5001
       targetPort: 5000
+      protocol: TCP
+      name: api
 EOF
 
-
-kubectl --kubeconfig /root/.kube/config apply -f /opt/MLFLOW/mlflow_service.yaml
-
+kubectl --kubeconfig /root/.kube/config apply -f /opt/MLFLOW/mlflow_api_service.yaml
 
 
 kubectl --kubeconfig /root/.kube/config apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.2/deploy/static/provider/cloud/deploy.yaml
@@ -328,11 +331,12 @@ kubectl --kubeconfig /root/.kube/config apply -f /opt/MLFLOW/nginx_service.yaml
 
 
 
-cat <<EOF | tee /opt/MLFLOW/mlflow_ingress.yaml
+
+cat <<EOF | tee /opt/MLFLOW/mlflow_api_ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: mlflow-ingress-nginx
+  name: mlflow-api-ingress
   namespace: mlflow
 spec:
   ingressClassName: nginx
@@ -345,15 +349,15 @@ spec:
       http:
         paths:
           - pathType: Prefix
-            path: "/"
+            path: "/api"
             backend:
               service:
-                name: mlflow-tracking-service
+                name: mlflow-api-service
                 port:
-                  number: 5000
+                  number: 5001
 EOF
 
-kubectl --kubeconfig /root/.kube/config apply -f /opt/MLFLOW/mlflow_ingress.yaml
+kubectl --kubeconfig /root/.kube/config apply -f /opt/MLFLOW/mlflow_api_ingress.yaml
 
 
 if [ "$configure_oracle_auth" != false ]; then
@@ -466,15 +470,56 @@ EOF
 
   kubectl --kubeconfig /root/.kube/config apply -f /opt/oauth/oauth_ingress.yaml
 
-  cat <<EOF | tee /opt/oauth/patch_mlflow_ingress.yaml
+
+  cat <<EOF | tee /opt/MLFLOW/mlflow_service.yaml
+apiVersion: v1
+kind: Service
 metadata:
+  name: mlflow-tracking-service
+  namespace: mlflow
+spec:
+  selector:
+    app: mlflow-tracking-server-pods
+  ports:
+    - port: 5000
+      targetPort: 5000
+EOF
+
+  kubectl --kubeconfig /root/.kube/config apply -f /opt/MLFLOW/mlflow_service.yaml
+
+
+
+  cat <<EOF | tee /opt/MLFLOW/mlflow_ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mlflow-ingress-nginx
+  namespace: mlflow
   annotations:
     nginx.ingress.kubernetes.io/auth-url: "https://$DOMAIN/oauth2/auth"
     nginx.ingress.kubernetes.io/auth-signin: "https://$DOMAIN/oauth2/start?rd=\$escaped_request_uri"
     nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user, x-auth-request-email"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+      - "$DOMAIN"
+    secretName: mlflow-tls-cert
+  rules:
+    - host: "$DOMAIN"
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: mlflow-tracking-service
+                port:
+                  number: 5000
 EOF
 
-  kubectl --kubeconfig /root/.kube/config patch ingress mlflow-ingress-nginx -n mlflow -p "$(cat /opt/oauth/patch_mlflow_ingress.yaml)"
+  kubectl --kubeconfig /root/.kube/config apply -f /opt/MLFLOW/mlflow_ingress.yaml
+
 fi
 
 
