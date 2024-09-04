@@ -131,7 +131,7 @@ You can check status of the OKE cluster using the following kubectl commands:
 	kubectl get all -A
 
 ### Mlflow Access
-The console should be available at https://mlflow.<reserved_public_ip>.nip.io . In case you're not seeing it, please wait for it to be available or:
+The console should be available at ```https://mlflow.<reserved_public_ip>.nip.io```. In case you're not seeing it, please wait for it to be available or:
 
 	ssh -i ~/.ssh/PRIVATE_KEY opc@EDGE_NODE_IP
 	cat /var/log/OKE-mlflow-initialize.log|egrep -i "Point your browser to"
