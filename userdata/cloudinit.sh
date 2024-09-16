@@ -8,7 +8,7 @@ log() {
 }
 
 
-##### SA VAD DACA PUN CERTIFICATUL/SECRET IN ALT NAMESPACE
+
 region=`curl -s -H "Authorization: Bearer Oracle" -L http://169.254.169.254/opc/v2/instance/regionInfo/regionIdentifier`
 obj_storage_namespace=`curl -s -H "Authorization: Bearer Oracle" -L http://169.254.169.254/opc/v2/instance/metadata/obj_storage_namespace`
 bucket_name=`curl -s -H "Authorization: Bearer Oracle" -L http://169.254.169.254/opc/v2/instance/metadata/bucket_name`
